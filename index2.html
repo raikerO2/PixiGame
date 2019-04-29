@@ -1,0 +1,151 @@
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<title>Pixi First Game</title>
+</head>
+<body>
+<script src="bin/pixi.js"></script>
+<script>
+"use strict";
+	
+	//Aliases
+	let Container = PIXI.Container,
+	autoDetectRenderer = PIXI.autoDetectRenderer,
+	loader = PIXI.loader,
+	resources = PIXI.loader.resources,
+	Sprite = PIXI.Sprite,
+	BaseTexture = PIXI.BaseTexture,
+	Texture = PIXI.Texture,
+	TextureCache = PIXI.utils.TextureCache,
+	Rectangle = PIXI.Rectangle,
+	gpuCorrect = PIXI.SCALE_MODES.NEAREST;
+
+
+	
+
+	//Base textures
+	let base = new BaseTexture("sprites_1.json"),
+	texture = new Texture(base),
+	sprite = new Sprite(texture);
+
+
+	//Create the stage and renderer
+	let stage = new Container(),
+	renderer = autoDetectRenderer(512, 512);
+	document.body.appendChild(renderer.view);
+	renderer.view.style.border = "1px dashed tomato";
+	renderer.backgroundColor = 0xFFFFFF;
+
+	loader
+	.add("sprites_1.json")
+	.on("progress", loadProgressHandler)
+	.load(setup);
+
+	function loadProgressHandler(loader, resource){
+		console.log(`loading: ${resource.url}`);
+		console.log(`progress: ${loader.progress}`);
+	}
+
+	function setup(){
+		//Other texture cache loading method...will need later
+	/*	let id = PIXI.loader.resources["sprites_1.json"].textures;*/
+		
+		//Automated frame/texture maker
+		function frame(source, x, y, width, height) {
+		let texture, imageFrame;
+
+		//If the source is a string, it's either a texture in the
+		//cache or an image file
+		if (typeof source === "string") {
+		if (TextureCache[source]) {
+		texture = new Texture(TextureCache[source]);
+			}
+		}
+
+		//If the `source` is a texture, use it
+		else if (source instanceof Texture) {
+		texture = new Texture(source);
+
+		}
+		if(!texture) {
+		console.log(`Please load the ${source} texture into the cache.`);
+
+		} else {
+
+		//Make a rectangle the size of the sub-image
+		imageFrame = new Rectangle(x, y, width, height);
+		texture.frame = imageFrame;
+		
+		//This line removes any artifacts
+		texture.baseTexture.scaleMode = gpuCorrect;
+		return texture;
+			}
+
+		}
+
+		//Create the sprites:
+		let skel = TextureCache["skeleton.png"],
+			skeleton = new Sprite(skel),
+			dun = TextureCache["dungeon.png"],
+			dungeon = new Sprite(dun),
+			tres = TextureCache["treasure.png"],
+			treasure = new Sprite(tres),
+			dor = TextureCache["doorClosed.png"],
+			door = new Sprite(dor);
+
+			
+
+		//Positioning and scaling the sprites
+		skeleton.position.set(100,400);
+		treasure.position.set(400,300);
+		door.position.set(32,0);
+		skeleton.scale.set(2,2);
+		//Adds the sprites to the canvas
+		stage.addChild(dungeon);
+		stage.addChild(door);
+		stage.addChild(skeleton);
+		stage.addChild(treasure);
+
+
+		//Make the Demon
+			let numberOfDemons = 6,
+			spacing = 48,
+			xOffset = 50,
+			yOffset = 20;
+
+			//Make as many demons as there are `numberOfDemons`
+			for (let i = 0; i < numberOfDemons; i++) {
+
+			//Make the demon
+			let demon = new Sprite(PIXI.loader.resources["sprites_1.json"].textures["demon.png"]);
+			/*let dem = TextureCache["demon.png"];
+			let demon = new Sprite(dem);*/
+
+			//Space each demon horizontally according to the `spacing` value.
+			//`xOffset` determines the point from the left of the screen
+			//at which the first demon should be added
+			let x = spacing * i + xOffset + yOffset;
+
+			//Give the demon a random y position
+			//(`randomInt` is a custom function - see ahead)
+			let y = randomInt(0, stage.height - demon.height - 20);
+
+			//Set the demon's position
+			demon.x = x;
+			demon.y = y;
+
+			//Add the blob sprite to the stage
+			stage.addChild(demon);
+			
+			}
+			function randomInt(min, max) {
+			return Math.floor(Math.random() * (max - min + 1)) + min;
+				}
+		//Rendering the stage
+		renderer.render(stage);
+		console.log("All files loaded");
+	}
+
+</script>
+</body>
+</html>
